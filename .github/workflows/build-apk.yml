@@ -1,1 +1,54 @@
+name: Build FracassAlarm APK
 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build debug APK from ZIP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check ZIP file
+        run: |
+          ls -la
+          test -f FracassAlarmProject.zip
+
+      - name: Unzip Android project
+        run: |
+          rm -rf extracted
+          mkdir extracted
+          unzip -o FracassAlarmProject.zip -d extracted
+          ls -la extracted
+          ls -la extracted/FracassAlarmProject
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Build debug APK
+        working-directory: extracted/FracassAlarmProject
+        run: gradle assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FracassAlarm-debug-apk
+          path: extracted/FracassAlarmProject/app/build/outputs/apk/debug/app-debug.apk
